@@ -1,0 +1,129 @@
+//Permission Denied
+
+// -> Type 'chmod +x elevator'
+
+//dot.c
+
+static unsigned short dot_ud[3][MAX_DOT] = {
+	{0x04, 0x08, 0x10, 0x08, 0x04}, //up
+        {0x10, 0x08, 0x04, 0x08, 0x10}, //down
+	{0x08, 0x08, 0x08, 0x08, 0x08}  //same
+};
+
+void dot_updown(int updown) {
+	int i;
+	for(i=0; i<MAX_DOT; i++){
+
+		if (updown == 1) {
+			*dot[i] = dot_ud[0][i]; //up	
+		}
+
+		else if (updown == 2) {
+			*dot[i] = dot_ud[1][i]; //down
+		}
+		
+		else if (updown == 3) {
+			*dot[i] = dot_ud[2][i]; //down
+		}
+	}
+}
+
+
+
+// main.c
+
+//int floor = 1;
+//static int floor = 1;
+//static int destination = 1;
+
+void select_mode() {
+   int i; 
+   char buf[100];
+   char clcd_start[] = "You are now 1F ";
+   led_clear();
+   dot_clear();
+   fnd_clear();
+   clcd_clear_display();
+   clcd_write_string(clcd_start);
+   printf("\n");
+   printf("************** Elevator ************\n");
+   printf("*   FND : Destination            *\n");
+   printf("*   DOT : Your floor (Start : 1F)  *\n");
+   printf("*   LED : Show 'up' or 'down'      *\n");
+   printf("*   CLCD : Explain Situation       *\n");
+   printf("*   Press '0' to exit elevator     *\n");
+   printf("************************************\n\n");
+   usleep(500000);	
+
+
+}
+
+void input_mode() {
+   int key_value;
+   char clcd_str[20];
+   char go_up[] = "Going up";
+   char go_down[] = "Going down ";
+   char door_open[] = " same floor         ";
+   char exit[] = " Good Bye";
+
+
+   keypad_read(&key_value); // key_value = our input
+   clcd_clear_display();
+
+if (key_value < 10 && key_value > 0)  
+{
+   destination = key_value;
+
+   /*led_bit(key_value);*/
+   if (floor < destination) { // go up
+      fnd_write(destination, 7);  // destination
+   	while(destination != floor){
+      		clcd_clear_display();
+      		led_up_shift();
+      		clcd_write_string(go_up);
+      		floor++;
+      		dot_write(floor);
+      		usleep(200000);
+      		dot_updown(1); // up sign
+      		usleep(100000);
+      	}
+}
+
+   else if (floor > destination) { // go down
+      fnd_write(destination, 7);  // destination
+      	while(destination != floor){
+      		clcd_clear_display();
+      		led_down_shift();
+      		clcd_write_string(go_down);
+      		floor--;
+      		dot_write(floor);
+      		usleep(200000);
+      		dot_updown(2); // down sign
+      		usleep(100000);
+      	}
+   }
+   else {
+	clcd_clear_display();
+	clcd_write_string(door_open);
+	usleep(500000);
+	key_value = 11;
+	}
+
+}
+
+else if (key_value == 0){
+	 clcd_clear_display();
+         clcd_write_string(exit);
+	 sel.exit = 1;
+
+}
+
+else{
+	dot_updown(3);
+	clcd_clear_display();
+	clcd_write_string(door_open);
+	usleep(500000);
+    }
+}
+
+//printf(" %d %d %d \n", floor, destination, key_value); // debug code, int number
